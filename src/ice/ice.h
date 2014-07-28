@@ -50,7 +50,14 @@ enum {
 	ICE_DEFAULT_Ta_NON_RTP  = 500, /**< Pacing interval [ms]            */
 	ICE_DEFAULT_RTO_RTP     = 100, /**< Retransmission TimeOut RTP [ms] */
 	ICE_DEFAULT_RTO_NONRTP  = 500, /**< Retransmission TimeOut [ms]     */
-	ICE_DEFAULT_RC          =   7  /**< Retransmission count            */
+
+	/*
+	 * [SnakE] Originally ICE_DEFAULT_RC was 7. This led to timeout sequence
+	 * 100, 200, 400, 800, 1600, 3200, 6400, 1600, i.e. 14.3 s in worst case.
+	 * Now it is 100, 200, 400, 800, 1600 => 3.1 s. See timeout_handler in
+	 * ctrans.c.
+	 */
+	ICE_DEFAULT_RC          =   4  /**< Retransmission count            */
 };
 
 
