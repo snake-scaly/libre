@@ -21,12 +21,15 @@
 #include <re_dbg.h>
 
 
+static void icem_conncheck_schedule_multiple(struct icem *icem);
+
+
 static void pace_next(struct icem *icem)
 {
 	if (icem->state != CHECKLIST_RUNNING)
 		return;
 
-	icem_conncheck_schedule_check(icem);
+	icem_conncheck_schedule_multiple(icem);
 
 	if (icem->state == CHECKLIST_FAILED)
 		return;
@@ -358,6 +361,41 @@ void icem_conncheck_schedule_check(struct icem *icem)
 #if 0
 	icem->state = CHECKLIST_COMPLETED;
 #endif
+}
+
+
+/**
+ * [SnakE] Scheduling Checks in Parallel
+ */
+static void icem_conncheck_schedule_multiple(struct icem *icem)
+{
+	struct candpair *cp;
+
+	/* If there are Waiting pairs, start checking them all. */
+	cp = icem_candpair_find_st(&icem->checkl, 0, CANDPAIR_WAITING);
+	if (cp) {
+		while (cp) {
+			do_check(cp);
+			cp = icem_candpair_find_st(&icem->checkl, 0, CANDPAIR_WAITING);
+		}
+		return;
+	}
+
+	/* Wait until all scheduled pairs are checked. */
+	cp = icem_candpair_find_st(&icem->checkl, 0, CANDPAIR_INPROGRESS);
+	if (cp) {
+		return;
+	}
+
+	/* Schedule any Frozen pairs. */
+	cp = icem_candpair_find_st(&icem->checkl, 0, CANDPAIR_FROZEN);
+	if (cp) {
+		while (cp) {
+			do_check(cp);
+			cp = icem_candpair_find_st(&icem->checkl, 0, CANDPAIR_FROZEN);
+		}
+		return;
+	}
 }
 
 
